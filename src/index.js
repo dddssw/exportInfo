@@ -1,15 +1,7 @@
 import { parse } from "@babel/parser";
 import traverse from "@babel/traverse";
-
-//defaultName
-// 示例代码
-const ast = parse(
-  `
- const a='123'
-export default a
-`,
-  { sourceType: "module" }
-);
+export default function getExportInfo(code, defaultName) {
+const ast = parse(code, { sourceType: "module" });
 const exportData = [];
 traverse.default(ast, {
   ExportNamedDeclaration({ node }) {
@@ -22,6 +14,7 @@ traverse.default(ast, {
   },
   ExportDefaultDeclaration({ node }) {
     const data = dealDefaultExport(node);
+    exportData.push(data);
   },
 });
 function dealComment(node) {
@@ -36,10 +29,10 @@ function dealNameExport(node) {
   const { declaration } = node;
   if (declaration) {
     const { params: paramsNode, id, type } = declaration;
-    let name = id ? declaration.id.name : "";
-    let params = paramsNode.map((item) => item.name);
     //导出是函数
     if (type === "FunctionDeclaration") {
+      const name = id ? declaration.id.name : "";
+      let params = paramsNode.map((item) => item.name);
       const { returnData, returnType } = dealFunction(
         node.declaration.body.body
       );
@@ -50,14 +43,17 @@ function dealNameExport(node) {
         type,
         returnData,
         returnType,
+        loc: node.loc,
       };
     }
     //导出是变量
     else {
+      const name = declaration.declarations[0].id.name;
       return {
         name,
         comment,
         type,
+        loc: node.loc,
       };
     }
   } else {
@@ -68,6 +64,22 @@ function dealNameExport(node) {
 
         // 查找与变量名匹配的 VariableDeclaration
         traverse.default(ast, {
+          FunctionDeclaration({ node }) {
+            if (node.id?.name === variableName) {
+              const { returnData, returnType } = dealFunction(node.body.body);
+              const params = node.params.map((item) => item.name);
+              const comment = dealComment(node);
+              exportData.push({
+                name: variableName,
+                comment,
+                params,
+                type: node.type,
+                returnData,
+                returnType,
+                loc: node.loc,
+              });
+            }
+          },
           VariableDeclaration({ node }) {
             node.declarations.forEach((declaration) => {
               if (declaration.id.name === variableName) {
@@ -85,12 +97,14 @@ function dealNameExport(node) {
                     type,
                     returnData,
                     returnType,
+                    loc: node.loc,
                   });
                 } else {
                   exportList.push({
                     name: variableName,
                     comment,
                     type,
+                    loc: node.loc,
                   });
                 }
               }
@@ -104,32 +118,54 @@ function dealNameExport(node) {
 }
 function dealDefaultExport(node) {
   const comment = dealComment(node);
-  const { declaration } = node;
+  const { declaration } = node;  
   if (declaration.left) {
     return {
       name: declaration.left.name,
       comment,
       type: declaration.type,
+      loc: declaration.loc,
     };
-  } else if (declaration.type === "FunctionDeclaration") {
+  } else if (
+    declaration.type === "FunctionDeclaration" ||
+    declaration.type === "ArrowFunctionExpression"
+  ) {
     const params = declaration.params.map((item) => item.name);
     const { returnData, returnType } = dealFunction(node.declaration.body.body);
     return {
-      name: declaration.id.name,
+      name: declaration.id?.name ?? defaultName,
       comment,
       params,
       type: declaration.type,
       returnData,
       returnType,
+      loc: declaration.loc,
     };
   } else if (declaration.type === "Identifier") {
     const name = declaration.name;
     const exportData = [];
     traverse.default(ast, {
-      VariableDeclaration(path) {
-        path.get("declarations").forEach((declaration) => {
-          if (declaration.node.id.name === name) {
-            const initNode = declaration.node.init;
+      FunctionDeclaration({ node }) {
+        if (node.id?.name === name) {
+          const { returnData, returnType } = dealFunction(node.body.body);
+          const params = node.params.map((item) => item.name);
+          const comment = dealComment(node);
+          exportData.push({
+            name,
+            comment,
+            params,
+            type: node.type,
+            returnData,
+            returnType,
+            loc: node.loc,
+          });
+        }
+      },
+      VariableDeclaration({ node }) {
+        node.declarations.forEach((declaration) => {
+          if (declaration.id.name === name) {
+            const comment = dealComment(node);
+            const initNode = declaration.init;
             // 确保初始化节点是一个函数
             if (
               initNode &&
@@ -147,19 +183,28 @@ function dealDefaultExport(node) {
                 type: initNode.type,
                 returnData,
                 returnType,
+                loc: node.loc,
               });
-            }else{
-   exportData.push({
-     name,
-     comment,
-     type: initNode.type,
-   });
+            } else {
+              exportData.push({
+                name,
+                comment,
+                type: initNode.type,
+                loc: node.loc,
+              });
             }
           }
         });
       },
     });
-    return exportData
+    return exportData;
+  }else{
+        return {
+          name: defaultName,
+          comment,
+          type: declaration.type,
+          loc: declaration.loc,
+        };
   }
 }
 function dealFunction(body) {
@@ -183,13 +228,14 @@ function dealFunction(body) {
             return returnBody.declarations[0].id.name === value;
           }
         });
-        if (!~index) {
-          //   vscode.window.showErrorMessage(`在 ${fileName}中出现语法错误`);
-          throw new Error(`没有定义return的数据`);
+        //return 的东西没有找到对应节点
+        if (~index) {
+          const comment = dealComment(body[index]);
+          const type = body[index].declarations[0].init.type;
+          returnData.push({ returnName: key, comment, type });
+        } else {
+          returnData.push({ returnName: key, comment: "", type: "Not Found" });
         }
-        const comment = dealComment(body[index]);
-        const type = body[index].declarations[0].init.type;
-        returnData.push({ returnName: key, comment, type });
       });
     } else {
       returnType = "NormalExpression";
@@ -206,5 +252,17 @@ function dealFunction(body) {
       returnData.push({ returnName: argument.name, comment });
     }
     return { returnData, returnType };
+  } else {
+    return { returnData, returnType: "noReturn" };
   }
 }
+return exportData
+}
+
+//  function a() {}
+//  const b = "123";
+//  const c = () => {};
+//  const d = function foo() {};
+//  export { a, b, c, d };
+
+// 示例代码
