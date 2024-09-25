@@ -1,6 +1,7 @@
 import { parse } from "@babel/parser";
 import traverse from "@babel/traverse";
-export default function getExportInfo(code, defaultName) {
+
+export function getExportInfo(code, defaultName) {
 const ast = parse(code, { sourceType: "module" });
 const exportData = [];
 traverse.default(ast, {
