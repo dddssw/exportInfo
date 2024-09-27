@@ -31,7 +31,7 @@ function dealNameExport(node) {
   if (declaration) {
     const { params: paramsNode, id, type } = declaration;
     //导出是函数
-    if (type === "FunctionDeclaration") {
+    if (type.includes('Function')) {
       const name = id ? declaration.id.name : "";
       let params = paramsNode.map((item) => item.name);
       const { returnData, returnType } = dealFunction(
@@ -144,14 +144,14 @@ function dealDefaultExport(node) {
     };
   } else if (declaration.type === "Identifier") {
     const name = declaration.name;
-    const exportData = [];
+    let exportData = {};
     traverse.default(ast, {
       FunctionDeclaration({ node }) {
         if (node.id?.name === name) {
           const { returnData, returnType } = dealFunction(node.body.body);
           const params = node.params.map((item) => item.name);
           const comment = dealComment(node);
-          exportData.push({
+          exportData={
             name,
             comment,
             params,
@@ -159,7 +159,7 @@ function dealDefaultExport(node) {
             returnData,
             returnType,
             loc: node.loc,
-          });
+          };
         }
       },
       VariableDeclaration({ node }) {
@@ -177,7 +177,7 @@ function dealDefaultExport(node) {
               const { returnData, returnType } = dealFunction(
                 initNode.body.body
               );
-              exportData.push({
+              exportData={
                 name: initNode.id.name,
                 comment,
                 params,
@@ -185,14 +185,14 @@ function dealDefaultExport(node) {
                 returnData,
                 returnType,
                 loc: node.loc,
-              });
+              };
             } else {
-              exportData.push({
+              exportData={
                 name,
                 comment,
                 type: initNode.type,
                 loc: node.loc,
-              });
+              };
             }
           }
         });
