@@ -2,7 +2,7 @@ import { parse } from "@babel/parser";
 import traverse from "@babel/traverse";
 
 export function getExportInfo(code, defaultName) {
-const ast = parse(code, { sourceType: "module" });
+const ast = parse(code, { sourceType: "module", plugins: ["typescript"] });
 const exportData = [];
 traverse.default(ast, {
   ExportNamedDeclaration({ node }) {
