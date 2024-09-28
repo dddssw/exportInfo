@@ -237,10 +237,10 @@ function dealFunction(body) {
         //return 的东西没有找到对应节点
         if (~index) {
           const comment = dealComment(body[index]);
-          const type = body[index].declarations[0].init.type;
+          const type = body[index].declarations[0].type;
           returnData.push({ returnName: key, comment, type });
         } else {
-          returnData.push({ returnName: key, comment: "", type: "Not Found" });
+          returnData.push({ returnName: key, comment: "", type: "Not Return" });
         }
       });
     } else {
@@ -255,7 +255,9 @@ function dealFunction(body) {
         throw new Error(`在 ${fileName}中出现语法错误`);
       }
       const comment = dealComment(body[index]);
-      returnData.push({ returnName: argument.name, comment });
+      debugger
+      const type = body[index].declarations[0].type;
+      returnData.push({ returnName: argument.name, comment, type });
     }
     return { returnData, returnType };
   } else {
