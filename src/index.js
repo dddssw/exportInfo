@@ -7,10 +7,12 @@ const exportData = [];
 traverse.default(ast, {
   ExportNamedDeclaration({ node }) {
     const data = dealNameExport(node);
-    if (Array.isArray(data)) {
-      exportData.push(...data);
-    } else {
-      exportData.push(data);
+    if(data){
+      if (Array.isArray(data)) {
+        exportData.push(...data);
+      } else {
+        exportData.push(data);
+      }
     }
   },
   ExportDefaultDeclaration({ node }) {
@@ -34,6 +36,9 @@ function dealNameExport(node) {
     if (type.includes('Function')) {
       const name = id ? declaration.id.name : "";
       let params = paramsNode.map((item) => item.name);
+      if(!node.declaration.body){
+          return 
+      }
       const { returnData, returnType } = dealFunction(
         node.declaration.body.body
       );
