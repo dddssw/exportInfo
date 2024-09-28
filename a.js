@@ -3,6 +3,7 @@ console.log(
   getExportInfo(`
 
 
+
 import { ref, onMounted, onUnmounted } from "vue";
 
 // 自定义 Hook 用于获取窗口大小
@@ -13,7 +14,7 @@ import { ref, onMounted, onUnmounted } from "vue";
   const height = ref(window.innerHeight);
 
   // 处理窗口大小变化的回调函数
-  const handleResize = () => {
+  function handleResize() {
     width.value = window.innerWidth;
     height.value = window.innerHeight;
   };
@@ -31,6 +32,7 @@ import { ref, onMounted, onUnmounted } from "vue";
   return {
     width,
     height,
+    handleResize,
   };
 }
 export  {useWindowSize};
@@ -59,9 +61,6 @@ export  {useWindowSize};
   return width;
 }
  export  const data='';
-
-
-
 
 `)
 );

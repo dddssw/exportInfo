@@ -4,6 +4,7 @@ import traverse from "@babel/traverse";
 export function getExportInfo(code, defaultName) {
 const ast = parse(code, { sourceType: "module", plugins: ["typescript"] });
 const exportData = [];
+
 traverse.default(ast, {
   ExportNamedDeclaration({ node }) {
     const data = dealNameExport(node);
@@ -230,14 +231,17 @@ function dealFunction(body) {
         const value = item.value.name;
 
         const index = body.findIndex((returnBody) => {
-          if (returnBody.declarations) {
-            return returnBody.declarations[0].id.name === value;
+          if (returnBody.type.includes("Function")){
+            return returnBody.id.name === value;
           }
+           else if (returnBody.type==='VariableDeclaration') {
+             return returnBody.declarations[0].id.name === value;
+           }
         });
         //return 的东西没有找到对应节点
         if (~index) {
           const comment = dealComment(body[index]);
-          const type = body[index].declarations[0].type;
+          const type =body[index].type.includes("Function")?body[index].id.name: body[index].declarations[0].type;
           returnData.push({ returnName: key, comment, type });
         } else {
           returnData.push({ returnName: key, comment: "", type: "Not Return" });
@@ -255,7 +259,6 @@ function dealFunction(body) {
         throw new Error(`在 ${fileName}中出现语法错误`);
       }
       const comment = dealComment(body[index]);
-      debugger
       const type = body[index].declarations[0].type;
       returnData.push({ returnName: argument.name, comment, type });
     }
