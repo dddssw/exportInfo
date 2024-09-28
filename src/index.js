@@ -241,7 +241,7 @@ function dealFunction(body) {
         //return 的东西没有找到对应节点
         if (~index) {
           const comment = dealComment(body[index]);
-          const type =body[index].type.includes("Function")?body[index].id.name: body[index].declarations[0].type;
+          const type =body[index].type.includes("Function")?body[index].type: body[index].declarations[0].type;
           returnData.push({ returnName: key, comment, type });
         } else {
           returnData.push({ returnName: key, comment: "", type: "Not Return" });
