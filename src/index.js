@@ -1,5 +1,6 @@
 import { parse } from "@babel/parser";
 import traverse from "@babel/traverse";
+import generate from "@babel/generator";
 
 export function getExportInfo(code, defaultName) {
 const ast = parse(code, { sourceType: "module", plugins: ["typescript"] });
@@ -18,6 +19,7 @@ traverse.default(ast, {
   },
   ExportDefaultDeclaration({ node }) {
     const data = dealDefaultExport(node);
+    data.isDefault=true
     exportData.push(data);
   },
 });
@@ -240,9 +242,10 @@ function dealFunction(body) {
         });
         //return 的东西没有找到对应节点
         if (~index) {
+          
           const comment = dealComment(body[index]);
           const type =body[index].type.includes("Function")?body[index].type: body[index].declarations[0].type;
-          returnData.push({ returnName: key, comment, type });
+          returnData.push({ returnName: key, comment, type, loc: body[index].loc });
         } else {
           returnData.push({ returnName: key, comment: "", type: "Not Return" });
         }
@@ -260,7 +263,12 @@ function dealFunction(body) {
       }
       const comment = dealComment(body[index]);
       const type = body[index].declarations[0].type;
-      returnData.push({ returnName: argument.name, comment, type });
+      returnData.push({
+        returnName: argument.name,
+        comment,
+        type,
+        loc: body[index].loc,
+      });
     }
     return { returnData, returnType };
   } else {
@@ -269,7 +277,30 @@ function dealFunction(body) {
 }
 return exportData
 }
+export function AddImport(code,name){
+  const ast = parse(code, { sourceType: "module", plugins: ["typescript"] });
+  traverse.default(ast, {
+    // 找到 ImportSpecifier
+    ImportDeclaration(node) {
+      const newSpecifier = {
+        type: "ImportSpecifier",
+        imported: {
+          type: "Identifier",
+          name
+        },
+        local: {
+          type: "Identifier",
+          name
+        },
+      };
 
+      node.node.specifiers.push(newSpecifier);
+    },
+  });
+  const output = generate.default(ast);
+ return output.code
+  
+}
 //  function a() {}
 //  const b = "123";
 //  const c = () => {};

@@ -1,66 +1,36 @@
-import {getExportInfo} from './src/index.js'
-console.log(
-  getExportInfo(`
-
-
-
-import { ref, onMounted, onUnmounted } from "vue";
-
-// 自定义 Hook 用于获取窗口大小
-  function useWindowSize(a,b) {
-  // 定义响应式的宽度和高度const {width,height} = useWindowSize()
-  
-  const width = ref(window.innerWidth);
-  const height = ref(window.innerHeight);
-
-  // 处理窗口大小变化的回调函数
-  function handleResize() {
-    width.value = window.innerWidth;
-    height.value = window.innerHeight;
-  };
-
-  // 在组件挂载时添加事件监听
-  onMounted(() => {
-    window.addEventListener("resize", handleResize);
+import { getExportInfo } from "./src/index.js";
+import path from 'path';
+// console.log(
+//   AddImport(`
+// import { parse,a,b } from "@babel/parser";
+// `)
+// );
+const data = getExportInfo(
+  `
+    import { ref, onMounted } from 'vue';
+ 
+function useFetch(request, params) {
+  const data = ref(null);
+  const error = ref(null);
+  const loading = ref(true);
+ 
+  onMounted(async () => {
+    try {
+      const {code, data: responseData} = await request(params||{});
+      if(code === '0') {
+        data.value = await responseData;
+      }
+    } catch (err) {
+      error.value = err.msg;
+    } finally {
+      loading.value = false;
+    }
   });
-
-  // 在组件卸载时移除事件监听
-  onUnmounted(() => {
-    window.removeEventListener("resize", handleResize);
-  });
-
-  return {
-    width,
-    height,
-    handleResize,
-  };
+ 
+  return { data, error, loading };
 }
-export  {useWindowSize};
-// 自定义 Hook 用于获取窗口大小
- export default function a (c,d) {
-  // 定义响应式的宽度和高度
-  const width = ref(window.innerWidth);
-  const height = ref(window.innerHeight);
-
-  // 处理窗口大小变化的回调函数
-  const handleResize = () => {
-    width.value = window.innerWidth;
-    height.value = window.innerHeight;
-  };
-
-  // 在组件挂载时添加事件监听
-  onMounted(() => {
-    window.addEventListener("resize", handleResize);
-  });
-
-  // 在组件卸载时移除事件监听
-  onUnmounted(() => {
-    window.removeEventListener("resize", handleResize);
-  });
-
-  return width;
-}
- export  const data='';
-
-`)
+ 
+export default useFetch;
+    `
 );
+console.log(data)
