@@ -179,14 +179,16 @@ function dealDefaultExport(node) {
             if (
               initNode &&
               (initNode.type === "FunctionDeclaration" ||
-                initNode.type === "FunctionExpression")
+                initNode.type === "FunctionExpression" ||
+                initNode.type === "ArrowFunctionExpression")
             ) {
+              debugger
               const params = initNode.params.map((item) => item.name);
               const { returnData, returnType } = dealFunction(
                 initNode.body.body
               );
-              exportData={
-                name: initNode.id.name,
+              exportData = {
+                name: initNode.id?.name??name,
                 comment,
                 params,
                 type: initNode.type,
@@ -195,7 +197,7 @@ function dealDefaultExport(node) {
                 loc: node.loc,
               };
             } else {
-              exportData={
+              exportData = {
                 name,
                 comment,
                 type: initNode.type,
