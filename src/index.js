@@ -182,7 +182,6 @@ function dealDefaultExport(node) {
                 initNode.type === "FunctionExpression" ||
                 initNode.type === "ArrowFunctionExpression")
             ) {
-              debugger
               const params = initNode.params.map((item) => item.name);
               const { returnData, returnType } = dealFunction(
                 initNode.body.body
