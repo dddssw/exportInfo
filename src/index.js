@@ -1,6 +1,7 @@
-import { parse } from "@babel/parser";
-import traverse from "@babel/traverse";
+//import { parse } from "@babel/parser";
+//import traverse from "@babel/traverse";
 import generate from "@babel/generator";
+import { parse, transform } from "@swc/core";
 
 export function getExportInfo(code, defaultName) {
 const ast = parse(code, { sourceType: "module", plugins: ["typescript"] });
@@ -278,6 +279,7 @@ function dealFunction(body) {
 }
 return exportData
 }
+//一般用于具名的插入
 export function AddImport(code,name){
   const ast = parse(code, { sourceType: "module", plugins: ["typescript"] });
   traverse.default(ast, {
@@ -302,10 +304,29 @@ export function AddImport(code,name){
  return output.code
   
 }
-//  function a() {}
-//  const b = "123";
-//  const c = () => {};
-//  const d = function foo() {};
-//  export { a, b, c, d };
-
-// 示例代码
+export async function a(code){
+   const data = await d(code, { syntax: "typescript", comments: true });
+   console.log(data)
+}
+parse("//123", {
+    syntax: "ecmascript",
+    comments: true,
+    script: true,
+  })
+  .then((module) => {
+    let hasComments = false;
+    transform(module, {
+      enter(node) {
+        if (node.type === "Comment") {
+          console.log("Found comment:", node);
+          hasComments = true;
+        }
+      },
+    });
+    if (!hasComments) {
+      console.log("No comments found in AST.");
+    }
+  })
+  .catch((err) => {
+    console.error("Error parsing code:", err);
+  });
