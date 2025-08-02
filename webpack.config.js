@@ -1,4 +1,5 @@
 import path from "path";
+import pathBrowserify from "path-browserify";
 
 // Webpack 配置
 const config = {
@@ -12,19 +13,26 @@ const config = {
   experiments: {
     outputModule: true, // 允许输出作为ESM
   },
-module: {
+  resolve: {
+    fallback: {
+      path: "path-browserify",
+      assert: false,
+      fs: false,
+    },
+  },
+  module: {
     rules: [
       {
-        test: /\.js$/,  // 适配.js文件
+        test: /\.js$/, // 适配.js文件
         exclude: /node_modules/,
         use: {
-          loader: 'babel-loader',
+          loader: "babel-loader",
           options: {
-            presets: ['@babel/preset-env']  // 适用于将现代JavaScript编译成更广泛兼容的格式
-          }
-        }
-      }
-    ]
+            presets: ["@babel/preset-env"], // 适用于将现代JavaScript编译成更广泛兼容的格式
+          },
+        },
+      },
+    ],
   },
   mode: "development", // 设置为生产模式
 };

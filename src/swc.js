@@ -1,40 +1,47 @@
 import { transform } from "@swc/core";
-// import addImportPlugin from "add-import-plugin";
-import addImportPlugin from "../add_import_plugin.wasm";
 
-export async function swcAddImport(source, { defalutImport, nameImport, path}) {
-    const { code } = await transform(source, {
-      jsc: {
-        target: "esnext",
-        parser: {
-          syntax: "typescript",
-          tsx: false,
-        },
-        experimental: {
-          plugins: [
-            [
-              addImportPlugin(),
-              {
-                defalutImport,
-                nameImport,
-                path
-              },
-            ],
-          ],
-        },
-        preserveAllComments: true,
+export async function swcAddImport(source, { default_import, name_import, path }) {
+  const { code } = await transform(source, {
+    jsc: {
+      target: "esnext",
+      parser: {
+        syntax: "ecmascript",
+        tsx: false,
+        keepImportAssertions: true,
+        keepImports: true,
       },
-      isModule: true,
-    });
-    console.log(code);
+      experimental: {
+        plugins: [
+          [
+            "add-import-plugin",
+            {
+              default_import,
+              name_import,
+              path,
+            },
+          ],
+        ],
+      },
+      preserveAllComments: true,
+    },
+    isModule: true,
+  });
+  console.log(code);
 }
-swcAddImport(
-  `    import { ElMessage } from 'element-plus'
-import { useThrottleFn } from '@vueuse/core'
-import useUser from '@/hooks/useUser'
-import { useCart } from '@/store/useCart'
-const router = useRouter()
-const search = ref('')`,
-  { defalutImport: "a", nameImport:["debounce","throttle"],path: "lodash" }
-);
+// usage
+// swcAddImport(
+//   `    import { ElMessage } from 'element-plus'
+// import { useThrottleFn } from '@vueuse/core'
+// import useUser from '@/hooks/useUser'
+// import { useCart } from '@/store/useCart'
+// import type {a} from 'oo'
+// const router = useRouter()
+// const search = ref('123')
+// function sum(a:number){
+  
+// }
+// `,
+
+//   { default_import: "a", name_import: ["debounce", "throttle"], path: "lodash" }
+// );
 

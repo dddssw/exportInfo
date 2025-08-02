@@ -1,7 +1,8 @@
-//import { parse } from "@babel/parser";
-//import traverse from "@babel/traverse";
+import { parse } from "@babel/parser";
+import traverse from "@babel/traverse";
 import generate from "@babel/generator";
-import { parse, transform } from "@swc/core";
+import { transformSync } from "@babel/core";
+import plugin from "../babel-plugin-add-import.js";
 
 export function getExportInfo(code, defaultName) {
 const ast = parse(code, { sourceType: "module", plugins: ["typescript"] });
@@ -304,29 +305,22 @@ export function AddImport(code,name){
  return output.code
   
 }
-export async function a(code){
-   const data = await d(code, { syntax: "typescript", comments: true });
-   console.log(data)
-}
-parse("//123", {
-    syntax: "ecmascript",
-    comments: true,
-    script: true,
-  })
-  .then((module) => {
-    let hasComments = false;
-    transform(module, {
-      enter(node) {
-        if (node.type === "Comment") {
-          console.log("Found comment:", node);
-          hasComments = true;
-        }
-      },
-    });
-    if (!hasComments) {
-      console.log("No comments found in AST.");
-    }
-  })
-  .catch((err) => {
-    console.error("Error parsing code:", err);
+
+export function insertImport(code,config){
+  const result = transformSync(code, {
+    plugins: [[plugin, config]],
+    configFile: false,
   });
+  return result.code
+}
+// console.log(
+//   insertImport(
+//     ` import a, { deepClone, isEqual } from 'lodash';
+//       import b, { isSame } from 'lodash';`,
+//     {
+//       path: "lodash",
+//       defaultImport: "a",
+//       nameImport: ["throttle", "debounce", "deepClone"],
+//     }
+//   )
+// );
